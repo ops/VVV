@@ -1,0 +1,580 @@
+; Säkkijärven Polkka adapted for the VIC-20 by Anders Carlsson
+
+; Define the NTSC duration fixing ratio.
+NTSC_M = 8
+NTSC_D = 6
+; The durations in this piece are multiples of 6, and 8/6 is closest to 6/5.
+#include "music.i"
+
+startsl:
+  dc.b <piece3,<piece2,<piece1
+startsh:
+  dc.b >piece3,>piece2,>piece1
+
+piece3:
+chanstart set .
+  volset 8
+  dur 54
+  s
+  dur 72
+  c2
+  dur 36
+  h1
+  dur 72
+  c2
+  c2
+  d2
+  dur 18
+  c2
+  g1
+  c2
+  g1
+  a1  
+  e1
+  a1
+  g#1
+loop3:
+  dur 6
+  a1
+  a1
+  s
+  e2
+  e2
+  s
+  c2
+  c2
+  s
+  e2
+  e2
+  s
+  e1
+  e1
+  s
+  h1
+  h1
+  s
+  g#1
+  g#1
+  s
+  h1
+  h1
+  s
+  e1
+  e1
+  s
+  h1
+  h1
+  s
+  h0
+  h0
+  s
+  h1
+  h1
+  s
+  a1
+  a1
+  s
+  e2
+  e2
+  s
+  c2
+  c2
+  s
+  h1
+  h1
+  s
+  a1
+  a1
+  s
+  e2
+  e2
+  s
+  c2
+  c2
+  s
+  e2
+  e2
+  s
+  e1
+  e1
+  s
+  h1
+  h1
+  s
+  g#1
+  g#1
+  s
+  h1
+  h1
+  s
+  e1
+  e1
+  s
+  h1
+  h1
+  s
+  h0
+  h0
+  s
+  h1
+  h1
+  s
+  a1
+  a1
+  s
+  e2
+  e2
+  s
+  c2
+  c2
+  s
+  h1
+  h1
+  s
+  a1
+  a1
+  s
+  e2
+  e2
+  s
+  c2
+  c2
+  s
+  e2
+  e2
+  s
+  e1
+  e1
+  s
+  e2
+  e2
+  s
+  h1
+  h1
+  s
+  g#1
+  g#1
+  s
+  e1
+  e1
+  s
+  h1
+  h1
+  s
+  g#1
+  g#1
+  s
+  h1
+  h1
+  s
+  a1
+  a1
+  s
+  e2
+  e2
+  s
+  c2
+  c2
+  s
+  h1
+  h1
+  s
+  a1
+  a1
+  s
+  e2
+  e2
+  s
+  c2
+  c2
+  s
+  e2
+  e2
+  s
+  e1
+  e1
+  s
+  e2
+  e2
+  s
+  h1
+  h1
+  s
+  g#1
+  g#1
+  s
+  e1
+  e1
+  s
+  h1
+  h1
+  s
+  g#1
+  g#1
+  s
+  h1
+  h1
+  s
+  a1
+  a1
+  s
+  e2
+  e2
+  s
+  c2
+  c2
+  s
+  h1
+  h1
+  s
+  go loop3
+
+piece2:
+chanstart set .
+  dur 54
+  s
+  dur 72
+  e1
+  dur 36
+  g1
+  dur 72
+  g1
+  dur 36
+  e1
+  f1
+  dur 72
+  g1
+  dur 6
+  e1
+  f1
+  e1
+  d1
+  e1
+  d1
+  dur 18
+  e1
+  c2
+  dur 6
+  a1
+  h1
+  a1
+  g#1 
+  a1  
+  g#1  
+  dur 18
+  a1
+  g#1
+loop2:
+  dur 6
+  a1
+  a1
+  s
+  c2  
+  d2  
+  c2  
+  h1  
+  c2  
+  h1  
+  dur 18
+  a1  
+  a1  
+  g#1 
+  s
+  s
+  dur 6
+  g#1
+  g#1
+  s
+  h1  
+  c2  
+  h1  
+  dur 18
+  a1  
+  g#1  
+  e1  
+  a1  
+  s
+  s
+  dur 6
+  a1
+  a1
+  s
+  c2  
+  d2  
+  c2  
+  h1  
+  c2  
+  h1  
+  dur 18
+  a1  
+  a1  
+  g#1  
+  s
+  s
+  dur 6
+  g#1
+  g#1
+  s
+  h1  
+  c2  
+  h1  
+  a1  
+  h1  
+  a1  
+  g#1  
+  a1  
+  g#1  
+  dur 18
+  a1
+  dur 54
+  s
+  dur 6
+  a1
+  a1
+  g#1  
+  a1  
+  a#1  
+  h1  
+  dur 18
+  c2  
+  c2  
+  a1  
+  h1  
+  dur 6
+  h1  
+  c2  
+  c#2  
+  dur 18
+  d2
+  dur 6
+  g#1
+  g#1
+  a1  
+  e1  
+  f1  
+  f#1  
+  dur 18
+  g#1  
+  e2  
+  d2  
+  c2  
+  dur 6
+  a1  
+  a#1 
+  h1  
+  dur 30
+  a1  
+  dur 6
+  g#1  
+  a1  
+  a#1  
+  h1  
+  dur 18
+  c2  
+  c2  
+  c2  
+  h1  
+  dur 6
+  h1  
+  c2  
+  c#2  
+  dur 18
+  d2  
+  g#1  
+  dur 6
+  g#1  
+  a1  
+  g#1  
+  a1  
+  a1  
+  a1  
+  h1  
+  e2  
+  d2  
+  dur 18
+  c2
+  s
+  s
+  g#1  
+  go loop2
+
+piece1:
+chanstart set .
+  dur 18
+  g0  
+  e0  
+  f0  
+  g0  
+  g0  
+  g0  
+  c1  
+  dur 30
+  d1
+  dur 6
+  g0
+  dur 72
+  e1
+  dur 36
+  c1
+  dur 24
+  a0
+  dur 12
+  d1
+  dur 36
+  c1
+  h0
+  dur 6
+  c1
+  d1
+  c1
+  h0
+  c1
+  h0
+  dur 18
+  c1
+  e1
+  dur 6
+  c1
+  d1
+  c1
+  h0
+  c1
+  h0
+  dur 18
+  a0
+  e1
+loop1:
+  dur 6
+  a1
+  a1
+  s
+  e1
+  f1
+  e1
+  dur 18
+  d1
+  c1
+  c1
+  h0
+  dur 6
+  h0
+  h0
+  e0
+  g#0
+  g#0
+  h0
+  e1
+  e1
+  s
+  d1
+  e1
+  d1
+  dur 18
+  c1
+  h0
+  h0
+  a0
+  dur 6
+  a0
+  a0
+  a0
+  c1
+  c1
+  e1
+  a1
+  a1
+  s
+  e1
+  f1
+  e1
+  dur 18
+  d1
+  c1
+  c1
+  h0
+  dur 6
+  h0
+  h0
+  e0
+  g#0
+  g#0
+  h0
+  e1
+  e1
+  s
+  d1
+  e1
+  d1
+  c1
+  d1
+  c1
+  h0
+  c1
+  h0
+  dur 18
+  a0
+  dur 54
+  s
+  dur 6
+  a0
+  a0
+  h0
+  c1
+  c1
+  d1
+  dur 18
+  e1
+  a1
+  a1
+  g#1
+  dur 6
+  g#1
+  a1
+  a#1
+  h1
+  h1
+  h1
+  e1
+  e1
+  f#1
+  g#1
+  g#1
+  a1
+  dur 18
+  h1
+  c2
+  h1
+  a1
+  dur 6
+  a1
+  a#1
+  h1
+  c2
+  c2
+  c2
+  a0
+  a0
+  h0
+  c1
+  c1
+  d1
+  dur 18
+  e1
+  a1
+  a1
+  g#1
+  dur 6
+  g#1
+  a1
+  a#1
+  dur 18
+  h1
+  e1
+  e1
+  f#1
+  g#1
+  a1
+  s
+  s
+  e1
+  go loop1

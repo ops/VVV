@@ -1,0 +1,546 @@
+Veni Vidi Vic!
+a trackmo for the Commodore VIC-20 with 8 kilobytes of memory expansion
+(some parts can be compiled with the STANDALONE option for unexpanded VICs)
+Released on The Party '96 on 27.-29.12.1996
+
+[Addendum: Re-released on September 18, 2004, with source code for
+Jonas Hultén's music, and with support for 1581, contributed by Pasi
+'Albert' Ojala.  You can compile the code with DASM 2.12.04 (© 1988
+Matthew Dillon, improvements © 1995 Olaf 'Rhialto' Seibert).
+Unfortunately, the GPL release of DASM 2.16 lacks Olaf's bug fixes and
+extensions.  To produce the original executable files, reverse the
+patch contained in the file "1581.patch".]
+
+Copyright © 1996 Marko Mäkelä, Anders Carlsson, Adam Bergström, Asger
+Alstrup and Jonas Hultén.  Most code by Marko, "Plasma" and "Rotator"
+originally by Adam.  Music routine originally by Asger Alstrup.  Most
+music by Anders Carlsson.  [Addendum: 1581 fixes copyright © 1997 Pasi
+Ojala and © 2004 Marko Mäkelä.]
+
+[Addendum: Please disregard the following statement, included in the
+initial release.] The music in the "mus.popcorn" and "mus.jonas" files
+was created by Jonas Hultén, and these files may not be distributed
+without Jonas' permission.  These files are not included with this
+package.  Note that we reserve the right to make binary distributions
+of this demo with Jonas' music included.
+
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program; if not, write to the Free Software
+    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+
+0 General information about the demo
+
+0.1 Order of demo parts
+
+source code	filename on the 1541 disk
+-----------	-------------------------
+init.s		veni vidi vic!
+1-intro.s	1-intro
+2-scroll.s	2-scroll
+3-copper.s	3-copper
+4-vector.s	4-vector
+5-plasma.s	5-plasma
+6-rotator.s	6-rotator
+7-end.s		7-end
+
+
+0.2 Running the demo
+
+To run these parts individually, just make a dummy loader (sec:rts).
+Assuming that the loader address is $336, you can use the following
+instructions: POKE822,56:POKE823,96.  All parts can be started by
+SYSing to their loading address.
+
+Some parts (intro, copper and plasma) have also been compiled with the
+STANDALONE option, so that they can be loaded and started on an
+unexpanded VIC-20.
+
+
+0.3 Compiling the demo
+
+The demo was developed using DASM, a macro assembler by Matthew
+Dillon, ported to ANSI C by Olaf Seibert and slightly patched by Marko
+Mäkelä.  You can get the latest version from
+http://www.funet.fi/pub/cbm/programming/.  The Makefile is written for
+GNU Make, but you can also compile the individual parts manually, if
+you prefer.
+
+[Addendum: please disregard the following statement.]
+Jonas Hultén unfortunately refused to release the source code of his
+music.  So, in order to compile parts that use his music, you will
+have to alter the MUSIC constant definition in the source files, to
+compile them without his music.
+
+
+1 Technical description of the demo parts
+
+
+1.0 veni vidi vic! part
+
+This part checks that the video chip has the correct amount of raster
+lines and will print out an error message if it is started with an
+incompatible videochip.  (The demo is available for both PAL and NTSC,
+but the PAL/NTSC adaptation has been performed at compile time in all
+parts.)
+
+This part installs the IRQ loader (Section 2.2).  It also memorizes
+the device number so that it can be used in the last demopart.  Then
+it blanks out the screen while loading the first actual demopart.  See
+Section 1.1.1 for discussion on the "curtain" effect, which is used to
+blank the screen.
+
+
+1.1 Intro part
+
+The intro part consists of three effects. The first of them,
+"curtain", turns the screen red, line by line, from top to bottom. The
+second effect, "flags", grows the Danish flag (white cross on red
+background), until the screen is completely white, and then the
+Finnish flag (blue cross on white background) followed by the Swedish
+flag (yellow cross on blue background), until the screen becomes solid
+yellow.  The last but definitely not least effect, "chess", zooms a
+chess board pattern on the screen.
+
+These effects use extremely little processor time, and the main
+program could do time-consuming calculations or decrunching while the
+intro is running. Currently the main program loads the first file
+starting with "1-" and starts it after the intro finishes.
+
+Unused memory when not STANDALONE: $2000-$3fff
+
+
+1.1.1 The "curtain" effect
+
+[Note: only in the STANDALONE version of the intro part]
+
+The main program initializes two interrupts to occur at the top of the
+screen. The IRQ interrupt (curtains) is synchronized with the screen
+refresh, and it turns the screen white. The NMIs (curtaine) which
+restore original screen colours, are generated after one frame and one
+raster line, so effectively the white area will grow by one line on
+each frame. The NMI routine contains a comparison, and when the screen
+bottom is reached, the next effect (nextpart$) will be activated.
+
+The text on the screen will be faded out by swapping in a white text page.
+This works without side effects, as long as the original text screen does
+not take more than 512 characters.
+
+1.1.2 The "flags" effect
+
+The Danish, Finnish and the Swedish flags contain a solid cross on a
+solid border.  It is easiest to draw this cross in two parts: the vertical
+line and the horizontal line. The most efficient way to produce a
+growing horizontal line is with interrupts. Now both interrupt
+positions are moving. The IRQ which sets the foreground colour at top
+of the horizontal line, stripes, moves 2 lines higher on each frame,
+and the NMI which sets the background colour at bottom of the
+horizontal line, stripee, moves 2 lines lower on each frame.
+
+The vertical line is easiest to draw with modifying characters. Let us
+assume that the vertical line would be at most 18 characters
+wide. Then you would need 18 modifying characters that would be copied
+on each text line, and you could change the vertical line just by
+changing these characters. This is exactly what is being made at the
+end of the stripes routine.  Because this takes a rather long time,
+the stripee routine may interrupt the stripes routine.  But it doesn't
+really matter, since the stripee routine is very short.
+
+The nextflag$ routine sets the colours for the next flag, and branches
+to the next effect initializations on completion.
+
+1.1.3 The "chess" effect
+
+This is the most time-consuming effect of the intro. A full-screen
+chess board is zoomed from 1x2-pixel squares to full screen height and
+back.  Just like in the "flags" effect, the vertical lines are
+produced with characters, while the horizontal lines are produced with
+interrupts.  The effect uses 8x16 character size, because the text
+matrix would otherwise grow too big. Also, it uses double-buffered
+characters, because there is not enough time to plot new vertical
+lines in the characters during vsync. The characters are plotted in an
+IRQ routine, chessy, which also switches the character sets and varies
+the square size.
+
+The horizontal lines are produced with NMI interrupts (chessx).
+Initially, the NMI is placed at the screen bottom, and it is
+synchronized with the screen refresh. However, the NMI routine changes
+the timer interval according to the selected square size. In normal
+operation, there are at least two NMIs per frame: one at top of
+screen, and the other at the point of the last colour change. There are
+two special interrupts on a frame. The frame's last interrupt (idle$)
+sets the amount of lines between the next frame's colour changes
+according to the square size, and it sets the amount of colour changes
+on the next frame. The last interrupt but one (last$) sets the amount
+of cycles between the current frame's last interrupt and the next
+frame's first interrupt, and it also updates the square size. In this
+way, the VIA timer only needs to be written two times per frame.
+
+The vertical bars are actually blitted by the "blitbars" subroutine.
+It blits a pattern of Y '1' bits and Y '0' bits in the characters.
+There are two optimizations in the routine. First, it only blits Y
+characters and copies the rest. Second, if the amount of bits to blit
+is greater than 8, the routine blits whole bytes. The actual blitting
+is performed by the "blit$" subroutine, which also exits the loop when
+all characters are blitted. The copying is performed at end of the
+routine. It assumes that the character sets end on a kilobyte
+boundary, i.e. the character set end addresses are multiples of $0400.
+
+The "chess" effect requires several tables, which are all functions of
+the square size. The "nmicount" table contains the amounts of colour
+changes per frame, the "nmidelay" tables contain the amount of cycles
+between the current frame's last NMI and the following frame's first
+NMI, and the "nmirate" tables contain the amount of cycles between the
+colour changes.
+
+The "blitbars" subroutine uses one variable, "blitcnt", which is
+allocated from end of the program code.
+
+A better aspect ratio for NTSC would achieved be with 1x1 squares, but
+there is not enough time to do NMI on every line, when the squares are
+zoomed to their smallest size.
+
+
+1.2 Scroll part
+
+This part works only with a memory expansion.  The program and all its
+data is in memory from $2000 on.  The memory below $2000 is used for
+video output.  This part scrolls a 128 lines high RLE compressed
+bitmap at very high speed, 4 pixels/frame.
+
+First a black stripe will be opened in the middle of the yellow
+screen.  This is performed by the interrupts "begint" and "endint".
+Then the scroller scrolls the bitmap in this black stripe, and finally
+the black stripe in the middle will be grown by "begint2" and
+"endint".  After the screen is all black, the next part can be started.
+
+The screen is configured for 8x16 character size, and the memory at
+$200-$2ff is used for text matrix.  The bit map is stored in the
+character generator, which is at $1000-$1fff.  The bit map is scrolled
+in two phases.  In the first phase, the screen origin is moved by 4
+pixels (the smallest possible transition) to left.  In the second
+phase, the original screen origin will be restored, and the text
+matrix will be scrolled by one column to left.  The new data to be
+revealed will be written to the next free video column.
+
+The part is quite unflexible.  The bitmap height must be a power of 2,
+and the whole 4kB of character generator space will always be used.
+Adding a check for wrap around in the blitting loop would cure these
+problems, but it would also make the routines somewhat slower.
+
+The RLE compressed bitmap to be scrolled is in the file scroll.bin.
+It was converted from a 1bit/pixel PPM file with the ppm2bin.c
+program.  Even a 8-kilobyte expansion could hold a well over 2000
+pixels wide bitmap, but the size was reduced in order to leave space
+for the next part, Copper, to be loaded.
+
+In the NTSC version, the line below the scroller jitters, but there is
+nothing that could be done about it.  The only solution would be to
+move the scroll to the right by 4 pixels, but then the very left side
+of the screen would look ugly.
+
+Unused memory when not STANDALONE: top of memory (ca. $2d00-$3fff).  The
+end address of the program will be compared against the Copper part's
+start address in the source code, so that these parts cannot overlap
+even if you change the bitmap.
+
+
+1.3 Copper part
+
+This is one of the most processor intensive parts in the demo.  The
+floppy LED is turned off most of the time, indicating that the data
+transfers from the floppy take extremely long time.  The copper effect
+is controlled by a routine that runs on zero page.  It calls the
+routines for each copper line through the jump table "linetab" and
+reads the background colours.  For each copper line, there is a
+program that consists of eight STA or STY $900f instructions and a JMP
+zpreturn.  To make the effect look even nicer, a text screen will
+bounce over the copper area.
+
+There is not much to say about this part.  Just study the code if you
+are interested in it.  The horizontal resolution of the copper
+scroller could be enhanced from the 6 (6560-101) or 7 (6561-101)
+pixels by unrolling the copper loop, but this would consume more
+memory.  I wanted this part to run on an unexpanded VIC, so that was
+out of question.
+
+Unused memory when not STANDALONE: $1000-$316d
+
+
+1.4 Vector part
+
+This part is very memory intensive.  The text matrix is moved to
+$200-$2ff, and the area at $1000-$1fff is reserved for two bitmaps.
+But there is free memory at $3200-$3fff.
+
+The vector routines were taken from C=Hacking 10, with the authors'
+permission.  The screen is split with an IRQ ("irq") and an NMI
+("nmi") in two parts.  The "irq" routine sets up the screen for the
+scroller, and the "nmi" routine is called at end of the scroll text.
+It restores the parameters for displaying the graphics buffer.  The
+frames are calculated by the "vector" routine, which is called from
+the "irq" routine right after enabling interrupts.  Because
+calculating a new picture may take several frames, self-modifying code
+is used to prevent calling the calculation routine before a previous
+calculation has finished.  The "vector" routine takes care of swapping
+the display buffers by modifying the "nmi" routine.
+
+As you probably know, the VIC-I doesn't have any scroll registers, but
+it has the ability to move the screen horizontally in steps of 4
+pixels.  As this speed is a bit too high for scrolling, the scroller
+in this part uses two character sets, one of which holds the text
+shifted 2 pixels to the left.  In this way, the text can be scrolled
+at only 2 pixels per frame, which is much easier to read.
+
+In the NTSC version, the line below the scroller jitters, but there is
+nothing that could be done about it.  The only solution would be to
+move the scroll to the right by 4 pixels, but then the very left side
+of the screen would look ugly.
+
+
+1.5 Plasma part
+
+This part was originally programmed by Adam Bergström, but the memory
+configuration and the program logic were not suitable for inclusion in
+the demo.  While I (Marko) restructured it, I also optimized the code.
+The music in this part, Popcorn, was written by Jonas Hultén, but
+unfortunately he refused to release its source code.
+
+This effect is quite straightforward.  The program runs in zero page
+and stack, except for the music routine, which is left in its original
+place.  Two graphics buffers at $1000 and $1200 are used for the
+screen output, and a 16x16 character set with the 32 shading patterns
+is moved to $1400 in the demo.  Double buffering is used for
+calculating the graphics.  The raster interrupt routine works in a
+similar manner with the vector part: it enables interrupts and calls
+the calculating routine.
+
+
+1.6 Rotator part
+
+Like Plasma, this part was originally programmed by Adam Bergström and
+restructured and optimized by Marko Mäkelä, and source code for its
+music is unavailable.  This part uses only colour memory for
+displaying the graphics, but two text matrix buffers must be
+initialized with spaces in order to display the graphics.  As the
+colour memory is limited to 1 kilobyte, and as this part uses double
+buffering, the graphics resolution is limited to 512 cells per frame.
+
+The interrupt routine is similar to that of Plasma.  After calculating
+some frames, the screen will be blanked out and the last part will be
+loaded.  Otherwise there wouldn't be enough free memory to load the
+last part.
+
+
+1.7 End part
+
+This part was programmed by Marko Mäkelä.  It has eight scrollers that
+use the same 16x16 as Vector.  The texts scroll at 4 pixels/frame,
+because there is no time nor the memory to use the technique that was
+chosen in 4-vector.s.  Colour bars rotate around the scrollers.  This
+part installs a routine in the floppy drive that displays a hidden
+message.
+
+In the NTSC version, the line below the scroller jitters, but there is
+nothing that could be done about it.  The only solution would be to
+move the scroll to the right by 4 pixels, but then the very left side
+of the screen would look ugly.
+
+
+2 Programming interface
+
+2.1 The header files
+
+In order to make the development easier, I created three header files:
+basic.i, global.i and timings.i.  Basic.i defines the macro "basicline"
+which creates a BASIC SYS line for the program.  It takes the start
+address and the BASIC line number as its parameters.
+
+The file global.i is included from every demopart.  It defines
+following constants:
+
+name		meaning
+----		-------
+SYSTEM		Television system: PAL or NTSC
+STANDALONE	Nonzero if the demo parts should be compiled as stand-alone
+		programs for an unexpanded VIC.
+MEMTOP		Top of memory space: $2000 or $4000, depending on the
+		STANDALONE option
+nextpart	start address of next demopart
+loader		start address of the fast loader
+
+In addition to these, all start addresses of different demo parts
+(when not STANDALONE) are defined here.  Actually, the STANDALONE and
+SYSTEM variables are now defined in the Makefile, which creates all
+targets for both systems and memory configurations.
+
+The file timings.i takes care of the most difficult timing stuff.  It
+defines following constants:
+
+name		meaning
+----		-------
+FIRST_LINE	first visible raster line number
+FIRST_COLUMN	first visible $9002 coordinate
+LAST_COLUMN	smallest invisible $9002 coordinate at right border
+LINES		number of raster lines per frame
+CYCLES_PER_LINE	number of processor clock cycles per raster line
+VIA_RELOAD_TIME	the time it takes to reload a VIA timer with autoload
+TIMER_VALUE	the value you should use for the VIA timer to get exactly
+		one interrupt per frame
+
+The macros in this header are as follows:
+
+; screensync: wait for a raster line (exact synchronization)
+; ----------
+; Parameters:
+;   {1} raster line number (plus 9 times 2), as read from $9004
+
+This macro waits for the specified raster line and removes the normal
+7-cycle inaccuracy caused by a loop like the following:
+
+	lda #value
+wait$:	cmp $9004
+	bne wait$
+
+Removing the inaccuracy takes 9 raster lines, so if you would like to
+execute your code on raster line x, you would do
+
+	screensync (x-9)/2
+
+The macro does not compare the least significant raster counter bit in
+$9003, so it will always start syncing on an even raster line.
+
+; setirq: set the timer interrupt on specified line
+; ------
+; Parameters:
+;   {1} raster line number (times 2 plus 9), as read from $9004
+;   {2} horizontal raster position (5 cycles granularity)
+;   {3} interrupt routine address
+;   {4} flag: should the Restore key be enabled?
+
+Setirq is a more complex macro that sets up a raster interrupt
+(emulated with a timer interrupt) to occur on the specified raster
+line.  As with the screensync macro, you should subtract 9 from the
+raster line value and divide it by 2.  The fourth parameter must be
+either TRUE or FALSE.  If it is TRUE, some code will be added to
+enable the Restore key again.  (It is disabled in the beginning of
+this macro.)
+
+; irqsync: synchronize a raster interrupt
+
+This is a pair of the setirq macro.  Put this as the first instruction
+of your interrupt routine, and the rest of the interrupt will run at the
+very same screen position.
+
+
+2.2 The fastloader
+
+The fast loader is installed by the init.s part.  It is very simple to
+use, and thanks to its fully synchronous transfer routines, it should
+run on any disk drive that has 1541 compatible serial bus hardware.
+In particular, the 1571 will work even in 2MHz mode with this routine.
+But the 1581 won't work at all, because it has different memory map,
+and the serial bus interface is completely different in it.
+
+On each invocation, the loader updates the file name to be loaded.  On
+first invocation, it will load the first file whose name begins with
+"1-".  On second invocation, it'll look for "2-", on third invocation
+for "3-" and so on.  If there are more than 9 files to be loaded, you
+can change the name in init.s.  Just search for lda #"0".
+
+Unless you change the LEDFLASH definition in init.s, the drive LED
+will indicate many things.  When the LED is turning slowly on and off,
+as if it was an analog component, the drive is waiting for a command
+from the computer.  When the LED is turned on, the disk is being read.
+When it is off, data is being transferred to the computer.  (This can
+also indicate that the drive has detected ATN=low (a normal serial
+bus command) and has returned to normal operation.)
+
+To have this loader load the next part while the current one is
+running, all effects in the current part must be interrupt-driven.
+The loader must run in the main program, and it will use all free
+raster time for fetching the bytes from the drive.
+
+Typically you activate the loader after you have started the first
+interrupt routine.  If the demo part consists of different subparts,
+then these subparts must be started from the previous part's
+interrupt.  This has been done in 1-intro.s and in 2-scroll.s, for
+instance.
+
+Your demopart's main program should end in a statement like this:
+
+	jmp .
+
+After the part is finished, you will add the fast loader.  Just
+replace the jump with the following code:
+
+	jsr loader	; load the next part
+	bcs .		; loop in case of error
+
+	[insert code to shut down the interrupts]
+
+	jmp (nextpart)	; jump to next demo part
+
+
+The best way to shut down the interrupts is double interlocking with
+self-modifying code.  Do something like this:
+
+[End of main program:]
+	jsr loader
+	bcs .
+	lda #$4c
+	sta exitirq	; modify the interrupt routine
+waitexit:
+	jmp waitexit	; self-modifying code: will be changed to lda
+	jmp (nextpart)
+
+[Somewhere in the interrupt routine]
+	...
+exitirq:
+	lda exit	; self-modifying code: will be changed to jmp
+	...
+
+exit:	lda #$ad
+	sta waitexit	; modify the main program
+	...		; acknowledge the interrupts etc. and
+			; return from interrupt
+
+
+This allows the effect to be restarted if the loader has not finished
+yet, or if an error has occurred.  Also, after the loader has
+finished, the effect will be finished before jumping to the next part.
+For instance, 1-intro.s will loop the checker board zoomer forever, if
+the next part could not be loaded.  2-scroll.s, 3-copper.s and
+4-vector.s will wrap the scrolltext from beginning.  The 5-plasma.s
+will loop the effect forever, but 6-rotator.s will just loop the music
+forever.
+
+There is a hardware-caused flaw in the routine.  If the drive is turned
+off, the routine may read phantom data from the serial bus, i.e. the
+signals read from the bus will vary, although they shouldn't.  I
+experienced this with my Oceanic OC-118N drive (1541 clone).  There were
+no other serial devices on the bus.  So, the protocol is not completely
+fault-tolerant.
+
+[Addendum: There are some timing glitches in the NTSC version of the demo.
+In the initial part, some jitter may be shown on the left overscan area
+of the screen - sometimes more, sometimes less.  In the "vector" part and
+in the last part, some garbage is shown on the bottom line of the scroll
+text.  The writes to the colour register at $900f are not completely
+synchronised with the screen.  You will notice this if your VIC-I has the
+"colour spark" bug/feature.  The music plays a bit too fast on NTSC systems.
+You are welcome to correct these bugs, or maybe I will in 2011, on the 30th
+anniversary of the VIC-20 and the 15th anniversary of the demo.  Thanks to
+Pasi 'Albert' Ojala for reporting these glitches, for the 1581 patches,
+and for getting me interested in advanced raster interrupt programming in
+the first place.  October 23, 2004 - Marko Mäkelä.]

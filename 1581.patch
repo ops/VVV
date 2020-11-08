@@ -1,0 +1,768 @@
+diff -u old/init.s ./init.s
+--- old/init.s	1996-12-22 14:54:47.000000000 +0200
++++ ./init.s	2004-09-19 14:30:08.000000000 +0300
+@@ -382,6 +382,7 @@
+ 		; 1 = LED glows on and off while waiting for a command
+ 		; 2 = LED on only while reading sectors
+ 		; 3 = 1 + 2
++;DRIVE = 1581	; 1581 or any other for 154x/157x-compatible
+ 
+ DEFAULT_DEVICE = 8	; Default device number
+ 
+@@ -407,6 +408,7 @@
+ smwcmd$:
+   lda mwcmd$,x
+   jsr ciout
++  jsr c1581wait
+   dex
+   bpl smwcmd$
+ 
+@@ -415,6 +417,7 @@
+ mwbyte$:
+   lda drvcode,x
+   jsr ciout
++  jsr c1581wait
+   inx
+   cpx #AMOUNT
+   bne mwbyte$
+@@ -445,14 +448,21 @@
+ 
+ ; send m-e to start the routine
+   jsr inidev$
+-  ldx #lmecmd$ - 1
+-sendcmd$:
+-  lda mecmd$,x
+-  jsr ciout
+-  dex
+-  bpl sendcmd$
++;  ldx #lmecmd$ - 1
++;sendcmd$:
++;  lda mecmd$,x
++;  jsr ciout
++;  dex
++;  bpl sendcmd$
+ ; perform the command
+-  jmp unlsn
++  lda #"U"
++  jsr ciout
++  jsr c1581wait
++  lda #"3"
++  jsr ciout
++  jsr c1581wait
++  jsr unlsn
++  jmp c1581wait
+ 
+ ; subroutine: make the current drive listen
+ 
+@@ -474,9 +484,15 @@
+ 
+ ; the m-e command backwards
+ 
+-mecmd$:
+-  dc.b >drive,<drive,"E-M"
+-lmecmd$ = . - mecmd$
++;mecmd$:
++;  dc.b >drive,<drive,"E-M"
++;lmecmd$ = . - mecmd$
++
++c1581wait:
++  ldy #50
++  dey
++  bne *-1
++  rts
+ 
+ ;---------------------------------------
+ ; the drive code
+@@ -485,23 +501,296 @@
+ 
+ #rorg $500
+ 
++;---------------------------------------
++; The fastload routine for the drive
++;---------------------------------------
++; The 1581-code and some optimization by Pasi Ojala, albert@cs.tut.fi
++
++PARANOID = 1	; The 1581 docs say that track 40, 0 contains
++		; a pointer to the first directory block.
++		; 1=use it, 0=make a guess (track 40, sector 3)
++;---------------------------------------
++; FOR 1581
++;---------------------------------------
++;acsbf8	= $03 ;job for buffer 1 (not used directly)
++trkbf8	= $0d ;track for job 1
++sctbf8	= $0e ;sector for job 1
++
++;ciapa	= $4000	; (not used directly)
++ciapb	= $4001
++ledon	= $cbcc	; activity led on: $cbcc, off: $cbc3
++ledoff	= $cbc3	; or using the job queue:  on $94 / off $96
++
++;---------------------------------------
++; FOR 1540/41/70/71
++;---------------------------------------
+ acsbf	= $01 ;access to buffer 1
+ trkbf	= $08 ;track of buffer 1
+ sctbf	= $09 ;sector of buffer 1
+ iddrv0	= $12 ;id of drive 0
+ id	= $16 ;id
+-datbf	= $14 ;databuffer
+-
+-buf	= $0400 ;sector buffer
+ 
+ via1pb	= $1800
+ via2pb	= $1c00
+ 
+ ;---------------------------------------
++; For both 154x/7x and 1581
++;---------------------------------------
++buf	= $0400	;sector buffer (for job 1)
++datbf	= $14	;databuffer - temporary (on 1581 sector for job 4)
++
+ 
+ drive:
+   cld
+-driveloop:
++  lda $ff54
++  and #$df
++  eor #$4c	; jmp abs or jmp (abs)?
++  beq drive1581
++  jmp drive1571
++
++drive1581:	; interrupts always enabled
++#if !(LEDFLASH & 1)
++  jsr ledoff
++#endif
++
++  jsr recv$	; get the file name, first char
++  sta name1$+1
++  jsr recv$	; get the file name, second char
++  sta name2$+1
++#if !(LEDFLASH & 2)
++  jsr ledon
++#endif
++
++#if PARANOID
++  ldx #40	; get the root block
++  ldy #0
++  jsr readsect$	; read the sector
++  bcs errquit$	; quit if it could not be read
++
++  ldx buf	; read the disk directory (track 40, sector 3 (usually))
++  ldy buf+1
++#else
++  ldx #40
++  ldy #3
++#endif
++dirloop$:
++  jsr readsect$	; read the sector
++  bcs errquit$	; quit if it could not be read
++
++  ldy #2
++nextfile$:
++  lda buf,y	; check file type
++  and #$87
++  cmp #$82	; must be PRG
++  bne notfound$
++
++  lda buf+3,y	; check the first two characters
++name1$:
++  cmp #"1"
++  bne notfound$
++
++  lda buf+4,y
++name2$:
++  cmp #"-"
++  beq found$
++
++notfound$:
++  tya
++  clc
++  adc #$20
++  tay
++  bcc nextfile$
++
++  ldy buf+1	; get next sector
++  ldx buf	; and track
++  bne dirloop$	; keep trying until the last directory block has been searched
++
++  ; file not found: fall through
++errquit$:
++  ldx #ESCBYTE	; send the escape byte followed by 1 to notify the computer
++  jsr send$
++  ldx #1
++  jsr send$
++
++  ; Error led flash on
++  lda #$98
++  ldx #1
++  jsr $ff54	; execute command for queue 1, return value in A also
++  jmp drive1581
++
++found$:
++  ldx buf+1,y	; get the track and sector numbers
++  lda buf+2,y
++  tay
++nextsect$:
++  jsr readsect$
++  bcs errquit$	; quit if the sector could not be read
++  ldy #255
++  lda buf
++  bne notlast$	; if the track is nonzero, this wasn't the last sector
++
++  ldy buf+1	; last sector: get sector length
++notlast$:
++  sty numlast$+1
++
++  ldy #1	; skip the track and sector when sending the buffer
++sendbuf$:	; send the buffer contents to the computer
++  ldx buf+1,y
++  cpx #ESCBYTE
++  bne noesc$
++
++  jsr send$	; escape the escape character
++  ldx #ESCBYTE
++noesc$:
++  jsr send$
++  iny
++numlast$:
++  cpy #255	; were all bytes of the block sent?
++  bne sendbuf$
++
++  ldy buf+1	; the track and sector of next block
++  ldx buf
++  bne nextsect$	; loop until all sectors are loaded
++
++finish$:
++  ldx #ESCBYTE	; send the escape byte followed by 0 to notify the computer
++  jsr send$
++  ldx #0
++  jsr send$
++  jmp drive1581
++
++;---------------------------------------
++; readsect$: read a sector
++
++readsect$:
++  stx trkbf8
++  sty sctbf8
++#if LEDFLASH & 2
++  jsr ledon
++#endif
++		; TODO: set head knock and retries
++  lda #$80
++  ldx #1
++  jsr $ff54	; execute command $80 for queue 1, return value in A also
++  cmp #2	; 0 and 1 -> (0-2 and 1-2) clears carry, errors set carry
++#if LEDFLASH & 2
++  jsr ledoff	; led off (does not affect carry)
++#endif
++  rts
++
++; send$ sends the X register contents. datbf is used as temporary storage.
++
++send$:
++  stx datbf
++  ldx #8	; send 8 bits
++; sendbit$ sends a bit
++sendbit$:
++  lsr datbf	; read next bit
++  lda #2	; prepare for CLK=high, DATA=low (was 2)
++  bcs sskip$
++  lda #8	; prepare for CLK=low, DATA=high (was 8)
++sskip$:
++  sta ciapb	; send the data
++
++sgetack$:
++  lda ciapb	; wait for CLK==DATA==low
++  and #5
++  eor #5
++  bne sgetack$
++  sta ciapb	; set CLK=DATA=high
++
++  lda #5
++swait$:
++  bit ciapb
++  bne swait$	; wait for CLK==DATA==high
++
++  dex
++  bne sendbit$	; loop until all bits have been sent
++  rts
++
++;---------------------------------------
++; recv$ receives a byte to A. datbf is used as temporary storage.
++
++recv$:
++#if LEDFLASH & 1
++  ldy #0	; LED brightness (0=dim, 255=lit)
++  tsx
++fincr$:
++  jsr doflash$
++  ldy datbf
++  iny
++  bne fincr$
++fdecr$:
++  dey
++  jsr doflash$
++  ldy datbf
++  bne fdecr$
++  beq fincr$
++
++doflash$:
++  sty datbf	; store the counter for LED flashing
++  jsr ledoff
++  jsr fdelay$	; perform the delay
++  jsr ledon
++  lda datbf
++  eor #$ff
++  tay		; fall through
++
++fdelay$:
++  lda #$85
++  and ciapb	; wait for any signal from the bus
++  bne flashdone$
++  iny
++  bne fdelay$
++  rts
++
++flashdone$:
++  jsr ledoff
++  txs		; discard the return address
++#endif
++
++  ldx #8	; counter: receive 8 bits
++recvbit$:
++  lda #$85
++  and ciapb	; wait for CLK==low || DATA==low
++  bmi gotatn$	; quit if ATN was asserted
++  beq recvbit$
++  lsr		; read the data bit
++  lda #2	; prepare for CLK=high, DATA=low
++  bcc rskip$
++  lda #8	; prepare for CLK=low, DATA=high
++rskip$:
++  sta ciapb	; acknowledge the bit received
++  ror datbf	; and store it
++rwait$:
++  lda ciapb	; wait for CLK==high || DATA==high
++  and #5
++  eor #5
++  beq rwait$
++  lda #0
++  sta ciapb	; set CLK=DATA=high
++
++  dex
++  bne recvbit$	; loop until all bits have been received
++  lda datbf	; read the data to A
++  rts
++
++gotatn$:
++  pla		; If ATN gets asserted, exit to the operating system.
++  pla		; Discard the return address.
++  cli		; Enable the interrupts.
++  rts
++
++;edrvcode:
++
++
++;---------------------------------------
++; FOR 1540/41/70/71
++;---------------------------------------
++
++
++drive1571:
++  cld
+   cli		; interrupts enabled until first sector read
+ #if !(LEDFLASH & 1)
+   lda via2pb
+@@ -510,9 +799,9 @@
+ #endif
+ 
+   jsr recv$
+-  sta temp1$	; get the file name, first char
++  sta name1$+1	; get the file name, first char
+   jsr recv$
+-  sta temp2$	; second char
++  sta name2$+1	; second char
+ #if !(LEDFLASH & 2)
+   lda #8
+   ora via2pb
+@@ -522,8 +811,6 @@
+   ldx #18
+   ldy #1	; read the disk directory (track 18, sector 1)
+ dirloop$:
+-  stx trkbf
+-  sty sctbf
+   jsr readsect$	; read the sector
+   bcs errquit$	; quit if it could not be read
+ 
+@@ -535,11 +822,13 @@
+   bne notfound$
+ 
+   lda buf+3,y	; check the first two characters
+-  cmp temp1$
++name1$:
++  cmp #0
+   bne notfound$
+ 
+   lda buf+4,y
+-  cmp temp2$
++name2$:
++  cmp #0
+   beq found$
+ 
+ notfound$:
+@@ -560,33 +849,27 @@
+   jsr send$
+   ldx #1
+   jsr send$
+-  jmp driveloop
++  jmp drive1571
+ 
+ found$:
+-  lda buf+1,y	; get the track and sector numbers
+-  sta trkbf
++  ldx buf+1,y	; get the track and sector numbers
+   lda buf+2,y
+-  sta sctbf
++  tay
+ 
+ nextsect$:
+   jsr readsect$
+   bcs errquit$	; quit if the sector could not be read
+-  ldy #$00
+-  lda buf+1	; store the track and sector of next block
+-  sta sctbf
++  ldy #255
+   lda buf
+-  sta trkbf
+   bne notlast$	; if the track is nonzero, this wasn't the last sector
+ 
+   ldy buf+1	; last sector: get sector length
+-  iny
+ notlast$:
+-  sty temp1$
+-
+-  ldy #2	; skip the track and sector when sending the buffer
++  sty numlast$+1
+ 
++  ldy #1	; skip the track and sector when sending the buffer
+ sendbuf$:	; send the buffer contents to the computer
+-  ldx buf,y
++  ldx buf+1,y
+   cpx #ESCBYTE
+   bne noesc$
+ 
+@@ -596,10 +879,12 @@
+ noesc$:
+   jsr send$
+   iny
+-  cpy temp1$	; were all bytes of the block sent?
++numlast$:
++  cpy #255	; were all bytes of the block sent?
+   bne sendbuf$
+ 
+-  lda buf
++  ldy buf+1	; store the track and sector of next block
++  ldx buf
+   bne nextsect$	; loop until all sectors are loaded
+ 
+ finish$:
+@@ -607,12 +892,14 @@
+   jsr send$
+   ldx #0
+   jsr send$
+-  jmp driveloop
++  jmp drive1571
+ 
+ ;---------------------------------------
+ ; readsect$: read a sector
+ 
+ readsect$:
++  stx trkbf
++  sty sctbf
+ #if LEDFLASH & 2
+   lda #8
+   ora via2pb
+@@ -778,8 +1065,7 @@
+   cli		; Enable the interrupts.
+   rts
+ 
+-temp1$ = .
+-temp2$ = . + 1
+-
+ edrvcode:
++;#endif
++
+ #rend
+diff -u old/7-end.s ./7-end.s
+--- old/7-end.s	1996-12-24 14:06:52.000000000 +0200
++++ ./7-end.s	2004-09-19 14:40:20.000000000 +0300
+@@ -87,90 +87,34 @@
+ 
+   jmp setup	; jump to the beginning 
+ 
+-driveinit:	; install the drive routine
+-; send the m-w command to write the data
+-mwloop$:
+-  jsr inidev$
+-  ldx #lmwcmd$ - 1
+-smwcmd$:
+-  lda mwcmd$,x
+-  jsr ciout
+-  dex
+-  bpl smwcmd$
+-
+-; send the actual data bytes  
+-  ldx #0
+-mwbyte$:
+-  lda drvcode,x
+-  jsr ciout
+-  inx
+-  cpx #AMOUNT
+-  bne mwbyte$
+-
+-; complete the command
+-  jsr unlsn
+-
+-; update the addresses
+-  clc
+-  lda #AMOUNT
+-  adc mwbyte$ + 1
+-  sta mwbyte$ + 1
+-  bcc noupdhi1$
+-  clc
+-  inc mwbyte$ + 2
+-noupdhi1$:
+-
+-  lda #AMOUNT
+-  adc mwcmd$ + 2
+-  sta mwcmd$ + 2
+-  tax
+-  lda #0
+-  adc mwcmd$ + 1
+-  sta mwcmd$ + 1
+-  cpx #<edrvcode
+-  sbc #>edrvcode
+-  bcc mwloop$
+-
+-; send m-e to start the routine
+-  jsr inidev$
+-  ldx #lmecmd$ - 1
+-sendcmd$:
+-  lda mecmd$,x
+-  jsr ciout
+-  dex
+-  bpl sendcmd$
+-; perform the command
+-  jmp unlsn
+-
+-; subroutine: make the current drive listen
+-
+-inidev$:
+-  lda fasave
+-  jsr listn
+-  lda #$6f
+-  jmp secnd
+-
+-; the m-w command backwards
++;---------------------------------------
++; the drive code
+ 
+-mwcmd$:
+-  dc.b AMOUNT,>drive,<drive,"W-M"
+-lmwcmd$ = . - mwcmd$
++drvcode:
+ 
+-; the m-e command backwards
++#rorg $500
+ 
+-mecmd$:
+-  dc.b >drive,<drive,"E-M"
+-lmecmd$ = . - mecmd$
++;---------------------------------------
+ 
+ ;---------------------------------------
+-; the drive code
++; Morse routine for the drive
++;---------------------------------------
++; The 1581-code by Pasi 'Albert' Ojala, albert@cs.tut.fi
+ 
+-drvcode:
++;---------------------------------------
++; FOR 1581
++;---------------------------------------
++ciapa = $4000			; There is also a CIA on the 1571 here, and
++ciapb = $4001			; port A is written also in 15[47][10] code,
++				; but the ports are unconnected on the 1571.
+ 
+-#rorg $500
++;---------------------------------------
++; FOR 1540/41/70/71
++;---------------------------------------
+ via1pb	= $1800
+ via2pb	= $1c00
+-dzp = $14	; buffer for current code
++dzp = $14	; buffer for current code (on 1581 sector for job 4)
++
+ TIMEBASE = 50	; morseing basic delay
+ 
+ ;---------------------------------------
+@@ -178,7 +122,13 @@
+ drive:
+   cld
+   sei
+-  lda via2pb	; read the VIA state
++  lda ciapa	; read the 1581 CIA state
++  and #$9f
++  sta ledoff81$
++  ora #$40
++  sta ledon81$
++  lda via2pb	; read the 15[47][01] VIA state (or a 1581 memory location)
++  pha		; prepare to restore it
+   and #$f3	; turn off the motor and the LED
+   sta ledoff$
+   ora #8
+@@ -192,6 +142,9 @@
+ ledon$ = . + 1	; now we get - or .
+   ldx #8
+   stx via2pb	; turn on the LED
++ledon81$ = . + 1
++  ldx #$40
++  stx ciapa	; turn on the LED on the 1581
+   asl dzp
+   bcc short$
+   ldx #3*TIMEBASE
+@@ -209,6 +162,10 @@
+   ldx #2*TIMEBASE
+ 
+ dodelay$:
++  lda $ff54	; see if we are running on a 1581
++  and #$df	; jmp abs or jmp (abs)?
++  eor #$4c	; jmp abs
++  beq delay1581$
+ dloop$:
+   lda via1pb	; quit if ATN was asserted
+   bmi gotatn$
+@@ -220,6 +177,26 @@
+   lda #0
+   sta via2pb	; turn off the LED
+   ldx #TIMEBASE
++  bne idelay$	; branch always
++
++delay1581$:
++dloop1581$:
++  nop		; need longer delay on the 1581
++  nop
++  nop
++  nop
++  nop
++  lda ciapb	; quit if ATN was asserted
++  bmi gotatn$
++  dey
++  bne dloop1581$
++  dex
++  bne dloop1581$
++ledoff81$ = . + 1
++  ldx #0
++  stx ciapa	; turn off the LED on 1581
++  ldx #2*TIMEBASE
++idelay$:
+ iloop$:		; make an inter-symbol pause
+   dey
+   bne iloop$
+@@ -243,7 +220,9 @@
+   ldx #<message$
+   stx msgsrc$
+   bne morseloop$; branch always
+-gotatn$:
++gotatn$:	; got ATN => exit
++  pla
++  sta via2pb	; restore VIA (or more importantly the 1581 track cache) state
+   cli
+   rts
+ 
+@@ -1165,6 +1144,84 @@
+ 
+ endcode:
+ 
++driveinit:	; install the drive routine
++; send the m-w command to write the data
++mwloop$:
++  jsr inidev$
++  ldx #lmwcmd$ - 1
++smwcmd$:
++  lda mwcmd$,x
++  jsr ciout
++  jsr c1581wait
++  dex
++  bpl smwcmd$
++
++; send the actual data bytes  
++  ldx #0
++mwbyte$:
++  lda drvcode,x
++  jsr ciout
++  jsr c1581wait
++  inx
++  cpx #AMOUNT
++  bne mwbyte$
++
++; complete the command
++  jsr unlsn
++
++; update the addresses
++  clc
++  lda #AMOUNT
++  adc mwbyte$ + 1
++  sta mwbyte$ + 1
++  bcc noupdhi1$
++  clc
++  inc mwbyte$ + 2
++noupdhi1$:
++
++  lda #AMOUNT
++  adc mwcmd$ + 2
++  sta mwcmd$ + 2
++  tax
++  lda #0
++  adc mwcmd$ + 1
++  sta mwcmd$ + 1
++  cpx #<edrvcode
++  sbc #>edrvcode
++  bcc mwloop$
++
++; send m-e to start the routine
++  jsr inidev$
++  lda #"U"
++  jsr ciout
++  jsr c1581wait
++  lda #"3"
++  jsr ciout
++  jsr c1581wait
++; perform the command
++  jsr unlsn
++  jmp c1581wait
++
++; subroutine: make the current drive listen
++
++inidev$:
++  lda fasave
++  jsr listn
++  lda #$6f
++  jmp secnd
++
++; the m-w command backwards
++
++mwcmd$:
++  dc.b AMOUNT,>drive,<drive,"W-M"
++lmwcmd$ = . - mwcmd$
++
++c1581wait:
++  ldy #50
++  dey
++  bne *-1
++  rts
++
+ #seg.u tempdata
+ #org endcode
+ #align 256

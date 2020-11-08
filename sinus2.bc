@@ -1,0 +1,22 @@
+/* Create a sinus table. */
+
+amp    = 32  /* sinus amplitude (from 0 to 255) */
+entl   = 16  /* entries per line */
+circle = 128 /* number of entries for the whole table (2pi) */
+
+scale=sc=10 /* number of significant digits in internal calculations */
+obase=10    /* output in decimal format */
+div=8*a(1)/circle
+
+for (i = 0; i < circle; i++) {
+	scale=sc
+
+	result = amp * s(i*div)
+	scale=0
+	if (!(i % entl)) print "	dc.b "
+
+	print result/1
+	if (!((i + 1) % entl)) print "\n" else print ","
+	scale=sc
+}
+quit

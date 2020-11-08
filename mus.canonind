@@ -1,0 +1,330 @@
+; Canon in D
+; Adapted for the VIC-20 by Anders Carlsson
+
+; Define the NTSC duration fixing ratio.
+NTSC_M = 19
+NTSC_D = 16
+; The durations in this piece are multiples of 16, and 19/16 is closest to 6/5.
+#include "music.i"
+
+startsl:
+  dc.b <piece3,<piece2,<piece1
+startsh:
+  dc.b >piece3,>piece2,>piece1
+
+piece3:
+chanstart set .
+  dur 64
+  d2 
+  a1 
+  h1 
+  f#1
+  g1 
+  d1 
+  e1 
+  a1 
+  go piece3
+
+piece2:
+chanstart set .
+  dur 16
+  s
+  a0 
+  d1 
+  f#1
+  s
+  a0 
+  c#1 
+  e1 
+  s
+  f#0 
+  h0 
+  d1 
+  s
+  f#0 
+  a0 
+  c#1 
+  s
+  d0 
+  g0 
+  h0 
+  s
+  d0 
+  f#0 
+  a0 
+  s
+  e0 
+  h0 
+  d1 
+  s
+  a0 
+  c#1 
+  e1 
+  s
+  f#1 
+  a1 
+  d1 
+  s
+  c#1 
+  e1 
+  a0 
+  s
+  d1 
+  f#1
+  h0 
+  s
+  a0 
+  c#1 
+  f#0 
+  s
+  h0 
+  d1 
+  g0 
+  s
+  f#0 
+  a0 
+  d1 
+  s
+  d1 
+  e1 
+  g0 
+  s
+  a0 
+  c#1 
+  e1 
+loop2:
+  dur 64
+  a1 
+  c#2 
+  d2 
+  c#2 
+  h1 
+  a1 
+  h1 
+  c#2 
+  dur 16   
+  s
+  a1 
+  f#1 
+  a1 
+  s
+  e1 
+  a1 
+  g1 
+  s
+  f#1 
+  d1 
+  f#1 
+  s
+  d1 
+  f#1 
+  a1 
+  g1 
+  d1 
+  e1 
+  g1 
+  f#1 
+  a1 
+  f#1 
+  d1 
+  e1
+  e1 
+  g1 
+  e1
+  e1 
+  c#1 
+  e1 
+  a1 
+  s
+  a1 
+  f#1
+  d1 
+  s
+  a1 
+  e1 
+  c#1 
+  s
+  h1 
+  f#1 
+  d1 
+  s
+  a1 
+  f#1 
+  d1 
+  s
+  g1 
+  d1 
+  h0 
+  s
+  f#1 
+  d1 
+  a0 
+  s
+  e1 
+  g1 
+  e1 
+  s
+  e1 
+  a1 
+  c#1 
+  s
+  f#1 
+  d2 
+  a1 
+  s
+  e1 
+  c#2 
+  a1 
+  s
+  d1 
+  h1 
+  f#1 
+  s
+  c#1 
+  a1 
+  f#1 
+  s
+  h0 
+  g1 
+  d1 
+  s
+  a0 
+  f#1 
+  d1 
+  s
+  e1 
+  g1 
+  e1 
+  s
+  e1 
+  a1 
+  g1 
+  go loop2
+
+piece1:
+chanstart set .
+  dur 64
+  s 
+  s
+  s
+  s
+  s
+  s
+  s
+  s
+  f#1 
+  e1 
+  d1 
+  c#1 
+  h0 
+  a0 
+  h0 
+  c#1 
+loop1:
+  dur 16
+  d1
+  e1
+  f#1
+  g1
+  a1
+  e1
+  a1
+  g1
+  f#1
+  h1
+  a1
+  g1
+  a1
+  g1
+  f#1
+  e1
+  d1
+  g1
+  h1
+  c#2
+  d2
+  c#2
+  h1
+  a1
+  g1
+  f#1
+  e1
+  h1
+  a1
+  g1
+  f#1
+  e1
+  f#1 
+  f#1  
+  s
+  f#1
+  f#1
+  g1
+  f#1
+  e1
+  d1
+  d1   
+  s
+  d1
+  d1
+  e1
+  d1
+  c#1
+  dur 64
+  h0
+  d1
+  dur 16
+  d1
+  c1
+  h0
+  c1
+  dur 64
+  c#1
+  dur 16
+  d1
+  d1  
+  s
+  d1
+  dur 32
+  e1  
+  c#1  
+  d1  
+  dur 16
+  s
+  d1
+  dur 32
+  f#1
+  a1
+  h1
+  g1
+  dur 16
+  f#1
+  a1
+  f#1
+  d1
+  g1
+  g1  
+  e1
+  e1   
+  c#1
+  e1
+  c#1
+  a0
+  dur 64
+  f#1
+  e1
+  d1
+  c#1
+  h0
+  a0
+  dur 32
+  g0
+  h0
+  c#1
+  dur 16
+  c#1
+  d1   
+  go loop1
+
+
+

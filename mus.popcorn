@@ -1,0 +1,1189 @@
+; Popcorn
+; -------
+; Made for the VIC-20 by Jonas Hultén
+; Adapted for the Veni Vidi Vic! demo and NTSC fixed by Marko Mäkelä
+
+; This program is free software; you can redistribute it and/or modify
+; it under the terms of the GNU General Public License as published by
+; the Free Software Foundation; either version 2 of the License, or a
+; later version.
+
+
+#processor 6502
+
+arpeggioenabled equ 0
+vibratoenabled	equ 1
+slideenabled	equ 1
+
+playspeed:	equ 2
+volume:		equ 8
+
+;------------------------------------------
+
+tempz:		ds.w	1
+currentchannel: ds.b	1
+
+;------------------------------------------
+
+;-----------------------------------------------------
+#mac playerinit
+;	lda #0
+;	sta arpeggiocounter
+;	sta speedcounter
+
+	ldx #dataend-datastart-1
+	lda #0
+.zfill:	  sta datastart,x
+	  dex
+	bpl .zfill
+
+	ldx #3
+.nextch:  lda #0
+	  sta $900a,x
+#if vibratoenabled
+	  lda #$ff
+	  sta vibratotime,x
+#endif
+	  lda #64
+	  sta freq,x
+	  dex
+	bpl .nextch
+
+;	ldx #0
+;.nextseq:
+;	  lda music,x
+;	  sta seqaddr,x
+;	  sta tempz
+;	  lda music+1,x
+;	  sta seqaddr+1,x
+;	  sta tempz+1
+;
+;	  ldy #0
+;	  lda (tempz),y
+;	  asl
+;	  tay
+;	  lda trackptrs,y
+;	  sta trackaddr,x
+;	  lda trackptrs+1,y
+;	  sta trackaddr+1,x
+;
+;	  inx
+;	  inx
+;	  cpx #8
+;	bne .nextseq
+
+	lda #3
+	sta currentchannel
+.next:	lda currentchannel
+	asl
+	tax
+	lda music,x
+	sta seqaddr,x
+	lda music+1,x
+	sta seqaddr+1,x
+	jsr realnewseq
+	dec currentchannel
+	bpl .next
+#endm
+
+;-----------------------------------------------------
+
+	MAC	vol
+	.byte $30+{1}
+	ENDM
+	MAC	snd
+	.byte $40+{1}
+	ENDM
+	MAC	dur
+	.byte $7f+{1}
+	ENDM
+	MAC	quiet
+	.byte $1f
+	ENDM
+	MAC	endtrack
+	.byte $ff
+	ENDM
+
+	MAC	repet
+	.byte $7f+{1},{2}
+	ENDM
+	MAC	stop
+	.byte $ff
+	ENDM
+	MAC	restart
+	.byte $fe
+	ENDM
+
+	mac c
+	.byte -1+{1}*12
+	endm
+	mac c#
+	.byte 0+{1}*12
+	endm
+	mac d
+	.byte 1+{1}*12
+	endm
+	mac d#
+	.byte 2+{1}*12
+	endm
+	mac e
+	.byte 3+{1}*12
+	endm
+	mac f
+	.byte 4+{1}*12
+	endm
+	mac f#
+	.byte 5+{1}*12
+	endm
+	mac g
+	.byte 6+{1}*12
+	endm
+	mac g#
+	.byte 7+{1}*12
+	endm
+	mac a
+	.byte 8+{1}*12
+	endm
+	mac a#
+	.byte 9+{1}*12
+	endm
+	mac b
+	.byte 10+{1}*12
+	endm
+
+
+
+	mac higher
+	.byte 29
+	endm
+	mac highest
+	.byte 30
+	endm
+
+#mac player
+play:
+#if vibratoenabled
+	inc vibratocounter	;make vibrato value
+	lda vibratocounter
+	and #7
+	tax
+	lda vibratolevels,x
+	sta vibratovalue
+	sta vibratovalue+1
+	lda vibratolevels+8,x
+	sta vibratovalue+2
+	sta vibratovalue+3
+#endif
+
+#if arpeggioenabled
+	ldx arpeggiocounter
+	inx
+	cpx #3
+	bne .noarpofl
+	ldx #0
+.noarpofl:
+	stx arpeggiocounter
+#endif
+
+
+#if arpeggioenabled | [slideenabled | vibratoenabled]
+	ldx #3			;vibrato and slide 1/50 s
+.nextvib:
+
+	 lda mode,x		;mute?
+	 bmi .mute
+	 lda freq,x
+	 bpl .noeffect
+#endif
+
+#if arpeggioenabled
+	 lda arpeggio,x
+	 beq .noarp
+;	 lda freq,x
+;	 bpl .noarp
+
+	 lda arpeggiocounter
+	 beq .arp0
+	 cmp #1
+	 beq .arp1
+.arp2:	 lda arpeggio,x
+	 and #$f
+	 bpl .arp21
+
+.arp0:	 lda freq,x
+	 sta $900a,x
+	 bne noviborslide	;branch always
+
+.arp1:	 lda arpeggio,x
+	 lsr
+	 lsr
+	 lsr
+	 lsr
+.arp21:	 clc
+	 adc note,x
+	 tay
+	 lda freqtable,y
+	 sta $900a,x
+	 bne noviborslide	;branch always
+.noarp:
+#endif
+
+#if slideenabled
+	 lda addval,x		;slide
+	 beq .noadd
+	 lda freq,x
+;	 bpl .noadd
+	 clc
+	 adc addval,x
+	 bmi .nooflow
+	 lda #64
+.nooflow:
+	 sta freq,x
+	 sta $900a,x
+
+.noadd:
+#endif
+
+#if vibratoenabled
+	 lda vibratotime,x	;vibrato
+	 bne .novib
+	 lda freq,x
+	 clc
+	 adc vibratovalue,x
+	 sta $900a,x
+.novib:
+#endif
+
+#if arpeggioenabled | [slideenabled | vibratoenabled]
+noviborslide:
+.noeffect:
+.mute:
+	dex
+	bpl .nextvib
+#endif
+
+				;play note now?
+	dec speedcounter
+	bmi .playnow
+	rts
+
+;-----------
+
+.playnow:
+	lda #playspeed-1
+	sta speedcounter
+
+	lda #3
+	sta currentchannel
+.nextch:
+	ldx currentchannel
+
+	lda mode,x		;mute?
+	bpl .nomute
+	jmp .playing
+
+.nomute:
+#if vibratoenabled
+	lda vibratotime,x	;decrement vibratotime?
+	beq .novibdec
+	cmp #$ff
+	beq .novibdec
+	dec vibratotime,x
+.novibdec:
+#endif
+
+;	ldx currentchannel
+	lda maxdurationtime,x
+	bmi .nolimit
+
+	dec maxdurationtime,x
+	bpl .nolimit
+
+	lda #64			;shut up.
+	sta freq,x
+	sta $900a,x
+
+.nolimit:
+;	ldx currentchannel
+	dec durationtime,x	;decrement duration
+	bmi .nextnote
+	jmp .playing
+
+.nextnote:
+	lda currentchannel	;new note
+	tax
+	asl
+	tay
+	lda trackaddr,y
+	sta tempz
+	lda trackaddr+1,y
+	sta tempz+1
+.nextnotequick:		;x must be currentchannel
+	lda trackpos,x
+	inc trackpos,x
+	tay
+	lda (tempz),y
+	bmi .neg
+	cmp #$40
+	bpl .sound
+	cmp #$30
+	bpl .vol
+	jmp .note
+
+.vol:	and #%00001111
+	sta .voldat
+	lda $900e
+	and #%11110000
+	ora #0
+.voldat:equ *-1
+volset = .
+	sta $900e
+	jmp .nextnotequick
+
+.sound: and #%00111111	;sound
+	asl
+	asl
+	tay
+;	ldx currentchannel
+#if slideenabled
+	lda soundlist,y
+	sta addval,x
+#endif
+#if vibratoenabled
+	lda soundlist+1,y
+	sta vibrato,x
+#endif
+#if arpeggioenabled
+	lda soundlist+2,y
+	sta arpeggio,x
+#endif
+	lda soundlist+3,y
+	sta maxduration,x
+	jmp .nextnotequick
+
+
+.neg:	cmp #$ff
+	beq newseq
+.duration:
+	and #%01111111	;duration
+	ldy currentchannel
+	sta duration,y
+	jmp .nextnotequick
+
+;++++++++++++++++++
+
+newseq:
+	jsr realnewseq
+	bcs .playing	;stopped
+	bcc .nextnote	;get note
+
+;++++++++++++++++++
+
+.note:	ldy currentchannel	;play note
+	and #%00011111
+	sta note,y
+	tax
+	lda freqtable,x
+	cmp freq,y
+	beq .samefreq
+	sta $900a,y
+.samefreq:
+	sta freq,y
+#if vibratoenabled
+	lda vibrato,y
+	sta vibratotime,y
+#endif
+	lda duration,y
+	sta durationtime,y
+	lda maxduration,y
+	sta maxdurationtime,y
+
+.playing:
+	dec currentchannel
+	bmi .end
+	jmp .nextch
+.end:	rts
+
+;-----------------------------------------------------
+;-> c=0 ok
+;-> c=1 channel stopped
+realnewseq:
+	lda currentchannel	;new sequence
+	tay	;y=current channel byte
+	asl
+	tax	;x=current channel word
+	lda #0
+	sta trackpos,y
+
+	lda seqrepeat,y
+	beq .newseq2
+
+	tya
+	tax
+	dec seqrepeat,x
+	clc
+	rts
+;	jmp .nextnote
+
+.newseq2:
+	lda seqaddr,x
+	sta nexttrack
+	lda seqaddr+1,x
+	sta nexttrack+1
+
+	inc seqaddr,x
+	bne .cont
+	inc seqaddr+1,x
+.cont:
+
+	lda $dead
+nexttrack:equ *-2
+
+	bpl .goseq
+	cmp #$ff
+	beq .stop
+	cmp #$fe
+	beq .restart
+
+	and #%00011111		;set repeat value
+	sta seqrepeat,y
+	jmp .newseq2
+
+.stop:	lda mode,y	;stop channel
+	ora #%10000000
+	sta mode,y
+	lda #64
+	sta freq,y
+	sta $900a,y
+	sec
+	rts
+;	jmp .playing
+
+.restart:
+	lda restartmusic,x		;restart music
+	sta seqaddr,x
+;	sta tempz
+	lda restartmusic+1,x
+	sta seqaddr+1,x
+;	sta tempz+1
+
+;	ldy #0
+;	lda (tempz),y
+	jmp realnewseq		;recursively get next sequence
+
+.goseq:
+	asl			;next sequence
+	tay
+	lda trackptrs,y
+	sta trackaddr,x
+	lda trackptrs+1,y
+	sta trackaddr+1,x
+	clc
+	rts
+;	jmp .nextnote
+
+#if vibratoenabled
+vibratolevels:
+	.byte 0,1,2,1,0,-1,-2,-1
+	.byte 0,1,2,2,1,0,-1,-1
+#endif
+
+freqtable:
+#if SYSTEM==PAL
+	;values 0-28
+	;c#0 - g-0
+	.byte	129,136,143,149,155,161,166,171
+	;a-0 - g-1 8-..
+	.byte	176,180,185,189,192,196,199,202,205,208,211,213
+	;a-1 - f-2
+	.byte	216,218,220,222,224,225,227,229,230
+	.byte	245,254,64
+#else
+	.byte	133,140,146,152,158,163,169,173
+	.byte	178,182,186,190,194,197,201,204,207,209,212,214
+	.byte	217,219,221,223,224,226,228,229,231
+	.byte	246,254,64
+#endif
+
+;-----------------------------------------------------
+;		  S O N G   D A T A
+;-----------------------------------------------------
+
+soundlist:
+	;add value, vibrato time, arpeggio, maxduration
+	.byte -50,-1,$00,-1	;0 bass drum
+	.byte -32,-1,$00,-1	;1 snare
+	.byte 32,-1,$00,-1	;2 hihat
+	.byte 0,-1,$00,3	;3 bass
+	.byte 0,-1,$00,1	;4 popcorn
+	.byte 0,-1,$00,-1	;5 fladder
+	.byte 0,6,$00,-1	;6 melody
+	.byte -1,0,$00,-1	;7 meloglide down
+	.byte 1,0,$00,-1	;8 meloglide up
+
+music:
+	.word seq0,seq1,seq2,seq3
+restartmusic:
+	.word seq0r,seq1r,seq2r,seq3r
+trackptrs:
+	.word track0,track1,track2,track3,track4,track5,track6,track7,track8,track9
+	.word track10,track11,track12,track13,track14,track15,track16,track17,track18
+	.word track19,track20,track21,track22,track23,track24,track25,track26,track27
+	.word track28;,track29;,track30,track31,track32,track33,track34
+
+track0: dur 48	;quiet
+	snd 3
+	quiet
+	quiet
+	endtrack
+
+track1:		;bass drum
+	snd 0
+	dur 12
+	.byte 27
+	.byte 27
+	.byte 27
+	.byte 27
+	endtrack
+
+track2:		;snare
+	snd 2
+	dur 6
+	quiet
+	dur 3
+	highest
+	highest
+	snd 1
+	dur 6
+	highest
+	snd 2
+	dur 3
+	highest
+	highest
+	dur 6
+	quiet
+	dur 3
+	highest
+	highest
+	snd 1
+	dur 6
+	highest
+	snd 2
+	dur 3
+	highest
+	highest
+	endtrack
+
+;	snd 1
+;	dur 12
+;	quiet
+;	dur 24
+;	highest
+;	dur 12
+;	highest
+;	endtrack
+
+track3:		;bass f
+	snd 3
+	dur 6
+	f 0
+	dur 3
+	f 1
+	c 1
+	dur 6
+	f 0
+	dur 3
+	f 1
+	c 1
+	dur 6
+	f 0
+	dur 3
+	f 1
+	c 1
+	f 0
+	g# 0
+	c 1
+	f 1
+	endtrack
+
+track4:		;bass f and down
+	snd 3
+	dur 6
+	f 0
+	dur 3
+	f 1
+	c 1
+	dur 6
+	f 0
+	dur 3
+	f 1
+	c 1
+
+	dur 6
+	d# 0
+	dur 3
+	d# 1
+	a# 0
+	dur 6
+	d# 0
+	dur 3
+	d# 1
+	a# 0
+
+	dur 6
+	c# 0
+	dur 3
+	c# 1
+	g# 0
+	dur 6
+	c# 0
+	dur 3
+	c# 1
+	g# 0
+
+	dur 6
+	f 0
+	dur 3
+	f 1
+	c 1
+	f 0
+	g# 0
+	c 1
+	f 1
+	endtrack
+
+track5:		;bass g#
+	snd 3
+	dur 6
+	g# 0
+	dur 3
+	g# 1
+	d# 1
+	dur 6
+	g# 0
+	dur 3
+	g# 1
+	d# 1
+	dur 6
+	g# 0
+	dur 3
+	g# 1
+	d# 1
+	g# 0
+	c 1
+	d# 1
+	g# 1
+	endtrack
+
+track6:		;bass up and g# - followed by 7, 8 or 9
+	snd 3
+	dur 6
+	c 1
+	dur 3
+	c 2
+	g 1
+	dur 6
+	c 1
+	dur 3
+	c 2
+	g 1
+
+	dur 6
+	a# 0
+	dur 3
+	a# 1
+	f 1
+	dur 6
+	a# 0
+	dur 3
+	a# 1
+	f 1
+
+	dur 6
+	g# 0
+	dur 3
+	g# 1
+	d# 1
+	dur 6
+	g# 0
+	dur 3
+	g# 1
+	d# 1
+	endtrack
+
+track7:		;continue from 6
+	dur 6
+	g# 0
+	dur 3
+	g# 1
+	d# 1
+	g# 0
+	c 1
+	d# 1
+	g# 1
+	endtrack
+
+track8:		;continue from 6
+	dur 6
+	f 0
+	dur 3
+	f 1
+	c 1
+	dur 6
+	f 0
+	dur 3
+	f 1
+	c 1
+	endtrack
+
+track9:		;continue from 6
+	dur 6
+	f 0
+	dur 3
+	f 1
+	c 1
+	f 0
+	g# 0
+	c 1
+	f 1
+	endtrack
+
+track10:	;pop delay
+	dur 42
+	quiet
+	quiet
+	endtrack
+
+track11:	;pop melo - followed by 12
+	snd 4
+	dur 6
+	f 1
+	d# 1
+	f 1
+	c 1
+	dur 3
+	g# 0
+	dur 6
+	c 1
+	dur 15
+	f 0
+	endtrack
+
+track12:	;pop melo followed by 13 or 14
+	dur 6
+	f 1
+	g 1
+	g# 1
+	dur 3
+	g 1
+	dur 6
+	g# 1
+	g# 1
+	dur 3
+	f 1
+	dur 6
+	g 1
+	dur 3
+	f 1
+	dur 6
+	g 1
+	g 1
+	dur 3
+	d# 1
+	dur 6
+	f 1
+	dur 3
+	d# 1
+	dur 6
+	f 1
+	f 1
+	endtrack
+
+track13:	;after 12
+	dur 3
+	c# 1
+	dur 12
+	f 1
+	endtrack
+
+track14:	;after 12
+	dur 3
+	g 1
+	dur 12
+	g# 1
+	endtrack
+
+track15:	;pop melo - followed by 16
+	snd 4
+	dur 6
+	c 2
+	a# 1
+	c 2
+	g# 1
+	dur 3
+	d# 1
+	dur 6
+	g# 1
+	dur 15
+	c 1
+	endtrack
+
+track16:	;pop melo followed by 17 or 18
+	dur 6
+	c 2
+	d 2
+	d# 2
+	dur 3
+	d 2
+	dur 6
+	d# 2
+	d# 2
+	dur 3
+	c 2
+	dur 6
+	d 2
+	dur 3
+	c 2
+	dur 6
+	d 2
+	d 2
+	dur 3
+	a# 1
+	dur 6
+	c 2
+	endtrack
+
+track17:	;after 16
+	dur 3
+	a# 1
+	dur 6
+	c 2
+	c 2
+	dur 3
+	g# 1
+	dur 12
+	c 2
+	endtrack
+
+track18:	;after 16
+	dur 3
+	a# 1
+	dur 6
+	g 1
+	dur 3
+	g 1
+	dur 6
+	a# 1
+	dur 12
+	c 2
+	endtrack
+
+track19:	;quiet 12
+	dur 12
+	quiet
+	endtrack
+
+track20:	;bludder d -> 21
+	snd 5
+	dur 3
+	f 0
+	g# 0
+	c 1
+	f 1
+	g# 1
+	f 1
+	c 1
+	g# 0
+	endtrack
+
+track21:	;bludder c -> 22
+	dur 3
+	d# 0
+	g 0
+	a# 0
+	d# 1
+	g 1
+	d# 1
+	a# 0
+	g 0
+	endtrack
+
+track22:	;bludder a# -> 20
+	dur 3
+	c# 0
+	f 0
+	g# 0
+	c# 1
+	f 1
+	c# 1
+	g# 0
+	f 0
+	endtrack
+
+track23:	;bludder f -> 24
+	snd 5
+	dur 3
+	g# 0
+	c 1
+	d# 1
+	g# 1
+	c 2
+	g# 1
+	d# 1
+	c 1
+	endtrack
+
+track24:	;bludder a -> 25
+	dur 3
+	c 1
+	d# 1
+	g 1
+	c 2
+	d# 2
+	c 2
+	g 1
+	d# 1
+	endtrack
+
+track25:	;bludder g -> 23
+	dur 3
+	a# 0
+	d 1
+	f 1
+	a# 1
+	d 2
+	a# 1
+	f 1
+	d 1
+	endtrack
+
+track26:	;melo
+	snd 6
+	dur 48-2
+	g# 0
+	snd 7
+	dur 2
+	g# 0
+	snd 6
+	dur 36
+	f 0
+	dur 6
+	g# 0
+	a# 0
+	dur 24
+	c 1
+	a# 0
+	g# 0
+	f 0
+
+	dur 48-2
+	g# 0
+	snd 7
+	dur 2
+	g# 0
+	snd 6
+	dur 36
+	f 0
+	dur 6
+	g# 0
+	a# 0
+	dur 24
+	c 1
+	a# 0
+	dur 48-12	;special
+	g# 0
+	snd 8
+	dur 12
+	g# 0
+
+	snd 6
+	dur 48-2
+	d# 1
+	snd 7
+	dur 2
+	d# 1
+	snd 6
+	dur 36
+	c 1
+	dur 6
+	d# 1
+	f 1
+	dur 24
+	g 1
+	f 1
+	dur 48
+	d# 1
+
+	snd 6
+	dur 48-2
+	d# 1
+	snd 7	;special
+	dur 2
+	d# 1
+	snd 6
+	dur 36
+	c 1
+	dur 6
+	d# 1
+	f 1
+	dur 24
+	g 1
+	f 1
+	dur 24-4
+	d# 1
+	snd 8	;special
+	dur 4
+	d# 1
+	snd 6
+	dur 24-12
+	f 1
+	endtrack
+
+track27:	;new bass drum
+	snd 0
+	dur 8*3
+	.byte 27
+	dur 2*3
+	.byte 27
+	dur 6*3
+	.byte 27
+	dur 7*3
+	.byte 27
+	dur 1*3
+	.byte 27
+	dur 2*3
+	.byte 27
+	dur 6*3
+	.byte 27
+	endtrack
+;b.......b.b.....b......bb.b.....
+;....s.......s.......s.......s...
+;..hh..hh..hh..hh..hh..hh..hh..hh
+
+track28:	;hihat
+	snd 2
+	dur 6
+	quiet
+	dur 3
+	highest
+	highest
+	dur 6
+	quiet
+	dur 3
+	highest
+	highest
+	dur 6
+	quiet
+	dur 3
+	highest
+	highest
+	dur 6
+	quiet
+	dur 3
+	highest
+	highest
+	endtrack
+
+;track29:	;open hihat+snare
+;	dur 6
+;	quiet
+;	snd 5
+;	highest
+;	snd 1
+;	highest
+;	snd 5
+;	highest
+;	quiet
+;	highest
+;	snd 1
+;	highest
+;	snd 5
+;	highest
+;	endtrack
+
+;++++++++++++++++++++++++++
+
+seq0:
+	.byte 0		;0
+seq0r:
+	repet 4*8,1	;bass drum
+	repet 2*4,27	;new bass drum
+	restart
+
+seq1:
+	.byte 3,3	;0
+seq1r:
+	.byte 3,3,4	;1
+	.byte 3,3,4	;2
+	.byte 5,5,6,7	;3
+	.byte 5,5,6,8	;4
+	.byte 3,3,4	;1
+	.byte 3,3,4	;2
+	.byte 5,5,6,7	;3
+	.byte 5,5,6,9	;5
+	repet 5,20
+	.byte 21,22;,20
+	repet 6,20
+	.byte 21,22,20
+	repet 4,23
+	.byte 24,25;,23,23
+	repet 6,23
+	.byte 24,25,23,20
+	restart
+
+seq2:
+	.byte 10		;0
+seq2r:
+	.byte 11,11,12,13	;1
+	.byte 11,11,12,14	;2
+	.byte 15,15,16,17	;3
+	.byte 15,15,16,18	;4
+	.byte 11,11,12,13	;1
+	.byte 11,11,12,14	;2
+	.byte 15,15,16,17	;3
+	.byte 15,15,16,18,19	;5
+	.byte 26
+	restart
+
+seq3:
+	.byte 0
+seq3r:
+	repet 4*4,28
+	repet 4*4+4*4,2
+;	repet 4*4,2
+	restart
+#endm
+
+#mac musicdata
+datastart:
+
+arpeggiocounter:ds.b	1
+speedcounter:	ds.b	1
+
+#if vibratoenabled
+vibratocounter: ds.b	1
+vibratovalue:	ds.b	4
+#endif
+
+mode:		ds.b	4	;bit 7=playing
+note:		ds.b	4	;current note
+arpeggio:	ds.b	4	;current arpeggio
+freq:		ds.b	4	;current frequency
+#if slideenabled
+addval:		ds.b	4
+#endif
+#if vibratoenabled
+vibrato:	ds.b	4	;vibratotime for sound
+vibratotime:	ds.b	4	;current time left to vibrato (255=no vibrato)
+#endif
+duration:	ds.b	4	;duration for sound (time left to play note)
+durationtime:	ds.b	4	;current time left to play note
+maxduration:	ds.b	4	;maximum length of sound
+maxdurationtime:ds.b	4	;current maximum length of sound
+trackpos:	ds.b	4
+seqrepeat:	ds.b	4
+trackaddr:	ds.w	4
+seqaddr:	ds.w	4
+
+dataend:
+#endm

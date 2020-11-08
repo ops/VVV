@@ -1,0 +1,31 @@
+--- mus.jonas	1996-12-24 13:15:46.000000000 +0200
++++ mus.jonas	2004-09-18 22:05:50.000000000 +0300
+@@ -1,9 +1,11 @@
+ ; Some original music by Jonas Hultén
+ ; Adapted for the Veni Vidi Vic! demo and NTSC fixed by Marko Mäkelä
+ 
+-; Do not distribute this file without permission from
+-; Jonas Hultén <md6cbm@mdstud.chalmers.se>.
++; This program is free software; you can redistribute it and/or modify
++; it under the terms of the GNU General Public License as published by
++; the Free Software Foundation; either version 2 of the License, or a
++; later version.
+ 
+ 	
+ #processor 6502
+--- mus.popcorn	1996-12-24 13:15:45.000000000 +0200
++++ mus.popcorn	2004-09-18 22:05:50.000000000 +0300
+@@ -3,8 +3,11 @@
+ ; Made for the VIC-20 by Jonas Hultén
+ ; Adapted for the Veni Vidi Vic! demo and NTSC fixed by Marko Mäkelä
+ 
+-; Do not distribute this file without permission from
+-; Jonas Hultén <md6cbm@mdstud.chalmers.se>.
++; This program is free software; you can redistribute it and/or modify
++; it under the terms of the GNU General Public License as published by
++; the Free Software Foundation; either version 2 of the License, or a
++; later version.
++
+ 
+ #processor 6502
+ 

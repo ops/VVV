@@ -1,0 +1,24 @@
+/* Create a sinus table. */
+
+amp    = 203 /* sinus amplitude (from 0 to 255) */
+phase  = 45   /* angle phase */
+entl   = 16  /* entries per line */
+circle = 240 /* number of entries for the whole table (2pi) */
+calc = circle /* how many entries should be calculated? */
+
+scale=sc=10 /* number of significant digits in internal calculations */
+obase=10    /* output in decimal format */
+div=8*a(1)/circle
+
+for (i = 0; i < calc; i++) {
+	scale=sc
+
+	result = amp/2 * (1 + s((phase+i)*div))
+	scale=0
+	if (!(i % entl)) print " dc.b "
+
+	print result/1
+	if (!((i + 1) % entl)) print "\n" else print ","
+	scale=sc
+}
+quit

@@ -1,0 +1,454 @@
+; Penny Lane by The Beatles.
+; Originally adapted for the VIC-20 by someone else;
+; converted and edited by Anders Carlsson.
+
+; Define the NTSC duration fixing ratio.
+NTSC_M = 10
+NTSC_D = 8
+; The durations in this piece are multiples of 8, and 10/8 is closest to 6/5.
+#include "music.i"
+
+startsl:
+  dc.b <piece3,<piece2,<piece1
+startsh:
+  dc.b >piece3,>piece2,>piece1
+
+piece3:
+chanstart set .
+  dur 32
+  s   
+
+  dur 24
+  c2 
+  s
+  a1
+  s
+  d2 
+  s
+  g1
+  s
+
+  c2 
+  s
+  a1
+  s
+  dur 64
+  c2 
+  dur 32
+  s  
+
+  dur 24
+  a1 
+  s 
+  a1 
+  s 
+  g#1 
+  s
+  g#1 
+  s
+
+  g1 
+  s
+  g1 
+  s
+  h1
+  h1
+  c2 
+  d2 
+
+  c2 
+  s
+  a1
+  s
+  d2 
+  s
+  g1 
+  s
+
+  c2 
+  s
+  a1
+  s
+  dur 64
+  c2
+  dur 32
+  s  
+
+  dur 24
+  a1 
+  s 
+  a1 
+  s 
+  g#1 
+  s
+  g#1 
+  s
+
+  g1 
+  s
+  g1 
+  s
+  dur 72
+  f1
+  dur 24
+  s
+
+  dur 96
+  a#1 
+  dur 72
+  a#1
+  dur 24 
+  d2   
+
+  d#2 
+  s
+  a#1 
+  s
+  d#2 
+  s
+  a#1 
+  s
+
+  dur 96  
+  a#1 
+  dur 72
+  a#1 
+  dur 24
+  d2 
+
+  d#2
+  d#2
+  d2
+  c2
+  dur 64
+  g1
+  go piece3
+
+piece2:
+chanstart set .
+  dur 32
+  s 
+
+  dur 96
+  g1
+  dur 24
+  c2 
+  dur 8
+  d2
+  d2 
+  c2 
+  dur 24
+  h1 
+  f1   
+
+  dur 96
+  g1  
+  dur 64
+  d#2 
+  dur 32
+  s
+
+  dur 96
+  g1 
+  dur 72
+  c2
+  dur 24
+  s  
+
+
+  dur 48
+  h1
+  s
+  s
+  dur 24
+  g1
+  e1
+
+  dur 96
+  g1 
+  dur 24
+  c2
+  dur 8
+  d2
+  d2 
+  c2 
+  dur 24
+  h1 
+  f1   
+
+  dur 96
+  g1
+  dur 64
+  d#2
+  dur 32
+  s
+
+  dur 96
+  g1 
+  dur 72
+  c2
+  dur 24
+  s
+
+  dur 48
+  h1
+  f1
+  dur 72
+  a1
+  dur 8
+  a#1
+  a#1
+  c2
+
+  dur 40
+  d2
+  dur 8
+  c2
+  dur 24
+  a#1
+  c2
+  dur 40
+  d2
+  dur 8
+  c2
+  dur 24
+  a#1
+  f1
+
+  dur 96
+  a#1  
+  a#1 
+
+  dur 40
+  d2
+  dur 8
+  c2
+  dur 24
+  a#1
+  c2
+  dur 40
+  d2
+  dur 8
+  c2
+  dur 24
+  a#1
+  f1
+
+  dur 96
+  g1
+  dur 24
+  h1
+  g1
+  dur 16
+  d1
+  go piece2
+
+piece1:
+chanstart set .
+  dur 8
+  g0
+  c1
+  c1
+  d1
+
+  e1
+  e1
+  d1
+  c1
+  c1
+  h0
+  c1
+  c1 
+  h0  
+  a0
+  a0
+  g0 
+  a0
+  a0
+  g0
+  dur 40
+  f0
+  dur 8
+  g0
+  c1
+  c1
+  d1
+
+  e1
+  e1
+  d1
+  c1
+  c1
+  h0
+  c1 
+  c1
+  g0  
+  a0
+  a0
+  c1  
+  dur 64
+  a#0
+  dur 8
+  g0  
+  c1
+  c1
+  d1 
+
+  d1
+  d1
+  dur 24
+  c1
+  dur 8
+  h0 
+  dur 24
+  c1
+  d1
+  dur 72
+  d#1
+  dur 8
+  c1
+  c1  
+  d1 
+
+  d#1
+  d#1  
+  c1  
+  dur 24
+  d1
+  dur 8
+  g1
+  g1
+  d1
+  dur 24
+  g1
+  dur 8
+  g1
+  g1
+  d1
+  dur 24
+  g1
+  g1
+  dur 8
+  c1  
+  c1
+  d1 
+
+  e1
+  e1  
+  d1   
+  c1
+  c1  
+  h0   
+  c1
+  c1  
+  h0   
+  a0
+  a0  
+  g0 
+  a0
+  a0  
+  g0   
+  dur 40
+  f0
+  dur 8
+  g0   
+  c1
+  c1  
+  d1   
+
+  e1
+  e1  
+  d1   
+  c1
+  c1  
+  h0 
+  c1
+  c1  
+  g0   
+  a0
+  a0  
+  c1 
+  dur 64
+  a#0
+  dur 8
+  g0 
+  c1
+  c1  
+  d1 
+
+  d1
+  d1  
+  c1     
+  c1
+  c1  
+  h0   
+  dur 24
+  c1
+  d1
+  dur 72
+  d#1
+  dur 8
+  c1
+  c1  
+  d1   
+
+  d#1
+  d#1  
+  c1   
+  dur 64
+  d1  
+  dur 8
+  a0   
+  dur 72
+  c1  
+  dur 8 
+  d1
+  d1  
+  d#1
+
+  dur 40
+  f1  
+  dur 56
+  d#1 
+  dur 40
+  f1 
+  dur 8
+  d#1   
+  dur 24
+  d1  
+  c1  
+
+  g1
+  f1
+  d#1
+  d1
+  d#1
+  c1
+  d1
+  d#1
+
+  dur 40
+  f1 
+  dur 8
+  d#1   
+  dur 24
+  d1  
+  d#1 
+  dur 40
+  f1 
+  dur 8
+  d#1   
+  dur 24
+  d1  
+  c1  
+
+  a#0  
+  c1 
+  d1  
+  d#1 
+  d1  
+  h0  
+  dur 16
+  g0
+  go piece1
+

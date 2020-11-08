@@ -1,0 +1,516 @@
+; Some original music by Anders Carlsson
+; written for Asger Alstrup's music routine
+
+instruments:
+
+;Vibration delay/off, duration of notes
+
+instr1:
+  byte 0
+
+instr2:
+  byte 10	; vibrato instrument
+
+startsl:
+  byte <piece1,<piece2,<piece3,<piece4
+startsh:
+  byte >piece1,>piece2,>piece3,>piece4
+
+piece1:
+  inst instr1
+
+  e 2, 96
+  d 2, 96
+  c 2, 96
+  h 1, 72
+  slide h, 1, e, 1, 24
+
+  e 1, 6
+  s 6
+  e 2, 6
+  e 1, 6
+  s 6
+  e 2, 6
+  e 1, 18
+  e 2, 6
+  h 1, 6
+  s 6
+  d 2, 6
+  s 6
+  d# 2, 6
+  s 6
+
+  e 1, 6
+  s 6
+  e 2, 6
+  e 1, 6
+  s 6
+  e 2, 6
+  e 1, 18
+  e 2, 6
+  h 1, 6
+  s 6
+  d 2, 6
+  s 6
+  d# 2, 6
+  s 6
+
+  e 1, 6
+  s 6
+  e 2, 6
+  e 1, 6
+  s 6
+  e 2, 6
+  e 1, 18
+  e 2, 6
+  h 1, 6
+  s 6
+  d 2, 6
+  s 6
+  d# 2, 6
+  s 6
+
+  e 1, 6
+  s 6
+  e 2, 6
+  e 1, 6
+  s 6
+  e 2, 6
+  e 1, 18
+  e 2, 6
+  h 1, 6
+  s 6
+  d 2, 6
+  s 6
+  d# 2, 6
+  s 6
+
+loop1:
+  e 1, 6
+  s 6
+  e 2, 6
+  e 1, 6
+  s 6
+  e 2, 6
+  e 1, 18
+  e 2, 6
+  h 1, 6
+  s 6
+  d 2, 6
+  s 6
+  d# 2, 6
+  s 6
+
+  e 1, 6
+  s 6
+  e 2, 6
+  e 1, 6
+  s 6
+  e 2, 6
+  e 1, 18
+  e 2, 6
+  h 1, 6
+  s 6
+  e 2, 6
+  s 6
+  g 1, 6
+  s 6
+
+  a 1, 6
+  s 6
+  e 2, 6
+  a 1, 6
+  s 6
+  e 2, 6
+  a 1, 18
+  e 2, 6
+  h 1, 6
+  s 6
+  d 2, 6
+  s 6
+  d# 2, 6
+  s 6
+
+  e 1, 6
+  s 6
+  e 2, 6
+  e 1, 6
+  s 6
+  e 2, 6
+  e 1, 18
+  e 2, 6
+  h 1, 6
+  s 6
+  d 2, 6
+  s 6
+  d# 2, 6
+  s 6
+
+  e 1, 6
+  s 6
+  e 2, 6
+  e 1, 6
+  s 6
+  e 2, 6
+  e 1, 18
+  e 2, 6
+  h 1, 6
+  s 6
+  d 2, 6
+  s 6
+  d# 2, 6
+  s 6
+
+  e 1, 6
+  s 6
+  e 2, 6
+  e 1, 6
+  s 6
+  e 2, 6
+  e 1, 18
+  e 2, 6
+  h 1, 6
+  s 6
+  e 2, 6
+  s 6
+  g 1, 6
+  s 6
+
+  a 1, 6
+  s 6
+  e 2, 6
+  a 1, 6
+  s 6
+  e 2, 6
+  a 1, 18
+  e 2, 6
+  h 1, 6
+  s 6
+  d 2, 6
+  s 6
+  d# 2, 6
+  s 6
+
+  e 1, 6
+  s 6
+  e 2, 6
+  e 1, 6
+  s 6
+  e 2, 6
+  e 1, 18
+  e 2, 6
+  h 1, 6
+  s 6
+  e 2, 6
+  s 6
+  g 1, 6
+  s 6
+
+  a 1, 6
+  s 6
+  e 2, 6
+  a 1, 6
+  s 6
+  e 2, 6
+  a 1, 18
+  e 2, 6
+  h 1, 6
+  s 6
+  d 2, 6
+  s 6
+  d# 2, 6
+  s 6
+
+  e 1, 6
+  s 6
+  e 2, 6
+  e 1, 6
+  s 6
+  e 2, 6
+  e 1, 18
+  e 2, 6
+  h 1, 6
+  s 6
+  e 2, 6
+  s 6
+  g 1, 6
+  s 6
+
+  a 1, 6
+  s 6
+  e 2, 6
+  a 1, 6
+  s 6
+  e 2, 6
+  a 1, 18
+  e 2, 6
+  g 1, 6
+  s 6
+  e 1, 6
+  s 6
+  c 2, 6
+  s 6
+
+  h 1, 6
+  s 6
+  a 1, 6
+  h 1, 6
+  s 6
+  d# 2, 6
+  h 1, 6
+  s 30
+  h 1, 6
+  s 6
+  d# 1, 6
+  s 6
+  go loop1
+
+piece2:
+  inst instr1	
+  e 1, 6
+  a 1, 6
+  h 1, 6
+  e 1, 6
+  a 1, 6
+  h 1, 6
+  e 1, 6
+  a 1, 6
+  h 1, 6
+  e 1, 6
+  a 1, 6
+  h 1, 6
+  e 1, 6
+  a 1, 6
+  h 1, 6
+  e 1, 6
+
+  a 1, 6
+  h 1, 6
+  e 1, 6
+  a 1, 6
+  h 1, 6
+  e 1, 6
+  a 1, 6
+  h 1, 6
+  e 1, 6
+  a 1, 6
+  h 1, 6
+  e 1, 6
+  a 1, 6
+  h 1, 6
+  e 1, 6
+  a 1, 6
+
+  g 1, 12
+  a 1, 24
+  h 1, 24
+  g 1, 12
+  a 1, 12
+  h 1, 12
+
+  a 1, 72
+  s 24
+
+  g 1, 12
+  s 186
+  s 186
+
+loop2:
+  s 192
+  s 192
+  s 192
+  s 192
+  s 48
+  inst instr1
+  c 2, 12
+  d 2, 12
+  c 2, 12
+  a 1, 12
+
+  g 1, 6
+  a 1, 6
+  g 1, 6
+  f# 1, 6
+  e 1, 72
+
+  s 96
+  f# 1, 42
+  s 6
+  f# 1, 6
+  g 1, 6
+  f# 1, 6
+  e 1, 6
+  f# 1, 12
+  s 12
+  go loop2
+
+piece3:
+  inst instr1
+  s 72
+  h 1, 6
+  slide h, 1, e, 2, 18
+
+  e 2, 36
+  inst instr1
+  d 2, 12
+  inst instr2
+  d 2, 48
+
+  inst instr1
+  e 1, 12
+  f# 1, 24
+  g 1, 24
+  e 1, 12
+  f# 1, 12
+  g 1, 12
+
+  f# 1, 72
+  g 1, 6
+  f# 1, 6
+  e 1, 6
+  d 1, 6
+
+  e 1, 12
+  s 174
+  s 174
+  e 1, 12
+  slide e, 1, h, 1, 12
+
+loop3:
+  inst instr1
+  h 1, 12
+  inst instr2
+  h 1, 60
+  inst instr1
+  a 1, 12
+  g 1, 12
+
+  a 1, 18
+  h 1, 18
+  inst instr2
+  e 1, 60
+
+  inst instr1
+  s 12
+  e 1, 6
+  slide e, 1, a, 1, 6
+  inst instr2
+  a 1, 24
+  inst instr1
+  g 1, 12
+  f# 1, 12
+  e 1, 12
+  d 1, 12
+
+  inst instr2
+  e 1, 72
+  inst instr1
+  s 12
+  e 1, 6
+  slide e, 1, h, 1, 6
+
+  h 1, 12
+  inst instr2
+  h 1, 60
+  inst instr1
+  a 1, 12
+  g 1, 12
+
+  a 1, 18
+  h 1, 18
+  inst instr2
+  e 1, 60
+
+  inst instr1
+  s 12
+  e 1, 6
+  slide e, 1, a, 1, 6
+  inst instr2
+  a 1, 24
+  inst instr1
+  g 1, 12
+  f# 1, 12
+  e 1, 12
+  d 1, 12
+
+  inst instr2
+  e 1, 48
+  inst instr1
+  s 12
+  e 1, 12
+  f# 1, 12
+  g 1, 6
+  slide g, 1, a, 1, 6
+
+  a 1, 12
+  inst instr2
+  a 1, 36
+  inst instr1
+  h 1, 12
+  a 1, 12
+  g 1, 12
+  f# 1, 12
+
+  g 1, 6
+  a 1, 6
+  g 1, 6
+  f# 1, 6
+  e 1, 12
+  inst instr2
+  e 1, 60
+
+  inst instr1
+  s 12
+  g 1, 6
+  slide g, 1, a, 1, 6
+  inst instr2
+  a 1, 24
+  inst instr1
+  g 1, 12
+  f# 1, 12
+  g 1, 12
+  a 1, 12
+
+  inst instr2
+  h 1, 42
+  inst instr1
+  s 6
+  h 1, 6
+  c 2, 6
+  h 1, 6
+  a 1, 6
+  h 1, 12
+  e 1, 6
+  slide e, 1, h, 1, 6
+  go loop3
+
+piece4:
+  inst instr1
+  s 192
+  s 192
+loop4:
+  bd 3
+  s 9
+  hh 6
+  inst instr2
+  sd 3
+  inst instr1
+  s 9
+  hh 6
+  bd 3
+  s 9
+  hh 6
+  inst instr2
+  sd 3
+  inst instr1
+  s 9
+  hh 6
+  bd 3
+  s 3
+  hh 6
+  inst instr2
+  sd 3
+  inst instr1
+  s 3
+  hh 6
+  go loop4
