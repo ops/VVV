@@ -17,8 +17,8 @@ MEMTOP = $2000	; no expansion
 MEMTOP = $4000	; 8k expansion
 #endif
 
-loader = $336	; start address of the IRQ loader
-nextpart = loader-2
+loader = $4000	; start address of the IRQ loader
+nextpart = $41DB
 		; vector to the start address of next demo part
 		; (set by the loader)
 fasave = $3ff	; device number of the disk drive used (needed in the end part)

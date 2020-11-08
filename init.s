@@ -50,8 +50,6 @@ doit:
   ; initialize the stack pointer
   ldx #$ff
   txs
-  ; install the fastloader
-  jsr init
 
   ldx #rlength	; move the routines to the destination area
 reloc$:

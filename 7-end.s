@@ -250,8 +250,6 @@ setup:
   lda #0
   sta $9002	; zero screen width (blank screen during setup)
 
-  jsr driveinit	; install the morse scroller
-
   ; set up the scroll text colours
   ldy #fWidth
 scrollc$:
