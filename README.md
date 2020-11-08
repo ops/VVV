@@ -1,5 +1,4 @@
-# Veni Vidi Vic! --- a trackmo for the Commodore VIC-20 with 16 kilobytes
-of memory expansion
+# Veni Vidi Vic! -- a trackmo for the Commodore VIC-20 with 16 kilobytes of memory expansion
 
 Ported to SD2IEC by ops November 2020.
 
