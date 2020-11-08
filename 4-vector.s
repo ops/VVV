@@ -690,7 +690,7 @@ done$
 ;** next, calculate a,b,c,...,i
 
 ;* another useful little macro
-#mac asr ;divide a signed number contained in .A by 2
+#mac asr_m ;divide a signed number contained in .A by 2
   cmp #$80
   ror
 #endm
@@ -723,14 +723,14 @@ done$
   lda cos,x
   ldx t7
   adc cos,x
-  asr
+  asr_m
   sta r21
   clc
   ldx t8
   lda cos,x
   ldx t6
   adc cos,x
-  asr
+  asr_m
   sec
   sbc r21
   clc
@@ -746,14 +746,14 @@ done$
   lda sin,x
   ldx t8
   adc sin,x
-  asr
+  asr_m
   sta r22
   sec
   ldx t5
   lda sin,x
   ldx t6
   sbc sin,x
-  asr
+  asr_m
   sec
   sbc r22
   clc
@@ -775,14 +775,14 @@ done$
   lda sin,x
   ldx t5
   adc sin,x
-  asr
+  asr_m
   sta r31
   ldx t6
   lda sin,x
   sec
   ldx t8
   sbc sin,x
-  asr
+  asr_m
   sec
   sbc r31
   clc
@@ -798,14 +798,14 @@ done$
   lda cos,x
   ldx t8
   adc cos,x
-  asr
+  asr_m
   sta r32
   clc
   ldx t6
   lda cos,x
   ldx t7
   adc cos,x
-  asr
+  asr_m
   sec
   sbc r32
   clc
